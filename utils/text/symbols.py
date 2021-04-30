@@ -10,19 +10,7 @@ _pad = '_'
 _punctuation = '!\'(),.:;? '
 _special = '-'
 
-# Prepend "@" to ARPAbet symbols to ensure uniqueness (some are the same as uppercase letters):
-_arpabet = ['@' + s for s in cmudict.valid_symbols]
+_phonemes = ['a', 'b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'æ', 'ç', 'ð', 'ø', 'ŋ', 'œ', 'ɐ', 'ɑ', 'ɔ', 'ə', 'ɛ', 'ɝ', 'ɡ', 'ɪ', 'ʁ', 'ʃ', 'ʊ', 'ʌ', 'ʏ', 'ʒ', 'ʔ', 'ː', '̃', '̍', '̩', 'θ']
 
-# Phonemes
-_vowels = 'iyɨʉɯuɪʏʊeøɘəɵɤoɛœɜɞʌɔæɐaɶɑɒᵻ'
-_non_pulmonic_consonants = 'ʘɓǀɗǃʄǂɠǁʛ'
-_pulmonic_consonants = 'pbtdʈɖcɟkɡqɢʔɴŋɲɳnɱmʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟ'
-_suprasegmentals = 'ˈˌːˑ'
-_other_symbols = 'ʍwɥʜʢʡɕʑɺɧ'
-_diacrilics = 'ɚ˞ɫ'
-
-phonemes = sorted(list(
-   _pad + _punctuation + _special + _vowels + _non_pulmonic_consonants
-   + _pulmonic_consonants + _suprasegmentals + _other_symbols + _diacrilics))
-
+phonemes = list(_pad + _punctuation + _special) + _phonemes
 phonemes_set = set(phonemes)
