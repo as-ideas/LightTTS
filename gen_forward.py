@@ -113,6 +113,7 @@ if __name__ == '__main__':
                                  energy_function=energy_function)
 
         m = gen['mel_post']
+        print(gen['dur'])
         if args.vocoder == 'melgan':
             m = torch.tensor(m).unsqueeze(0)
             torch.save(m, out_path / f'{wav_name}.mel')

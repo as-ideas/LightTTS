@@ -323,6 +323,9 @@ class ForwardTacotron(nn.Module):
         self.eval()
 
         dur = self.dur_pred(x, alpha=alpha)
+
+        # make sure every phoneme is in the prediction
+        dur[dur < 1] = 1.
         dur = dur.squeeze(2)
 
         # Fixing breaking synth of silent texts
