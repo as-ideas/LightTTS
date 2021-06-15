@@ -33,9 +33,9 @@ class SeriesPredictor(nn.Module):
                  conv_layers=3, rnn_dims=64, dropout=0.5):
         super().__init__()
         self.embedding = Embedding(num_chars, emb_dim)
-        self.conv_gru = ConvGru(in_dims=emb_dim, conv_layers=conv_layers, conv_dims=conv_dims,
-                                kernel_size=kernel_size, gru_dims=rnn_dims,
-                                dropout=dropout)
+        self.conv_lstm = ConvLstm(in_dims=emb_dim, conv_layers=conv_layers, conv_dims=conv_dims,
+                                 kernel_size=kernel_size, lstm_dims=rnn_dims,
+                                 dropout=dropout)
         self.lin = nn.Linear(2 * rnn_dims, 1)
         self.dropout = dropout
 
@@ -44,18 +44,18 @@ class SeriesPredictor(nn.Module):
                 x_lens: torch.tensor = None,
                 alpha=1.0) -> torch.tensor:
         x = self.embedding(x)
-        x = self.conv_gru(x, x_lens=x_lens)
+        x = self.conv_lstm(x, x_lens=x_lens)
         x = self.lin(x)
         return x / alpha
 
 
-class ConvGru(nn.Module):
+class ConvLstm(nn.Module):
 
     def __init__(self,
                  in_dims: int,
                  conv_layers=3,
                  conv_dims=512,
-                 gru_dims=512,
+                 lstm_dims=512,
                  kernel_size=5,
                  dropout=0.,
                  padding_value=0) -> None:
@@ -65,7 +65,7 @@ class ConvGru(nn.Module):
         self.convs = torch.nn.ModuleList([
             BatchNormConv(conv_dims, conv_dims, kernel_size, activation=torch.relu) for _ in range(conv_layers - 2)
         ])
-        self.gru = nn.GRU(conv_dims, gru_dims, batch_first=True, bidirectional=True)
+        self.lstm = nn.LSTM(conv_dims, lstm_dims, batch_first=True, bidirectional=True)
         self.dropout = dropout
         self.padding_value = padding_value
 
@@ -83,7 +83,7 @@ class ConvGru(nn.Module):
         if x_lens is not None:
             x = pack_padded_sequence(x, lengths=x_lens, batch_first=True,
                                      enforce_sorted=False)
-        x, _ = self.gru(x)
+        x, _ = self.lstm(x)
         if x_lens is not None:
             x, _ = pad_packed_sequence(x, padding_value=self.padding_value, batch_first=True)
         return x
@@ -131,17 +131,17 @@ class ForwardTacotron(nn.Module):
                  prenet_kernel_size: int,
                  prenet_conv_layers: int,
                  prenet_conv_dims: int,
-                 prenet_gru_dims: int,
+                 prenet_lstm_dims: int,
                  prenet_dropout: int,
                  main_kernel_size: int,
                  main_conv_layers: int,
                  main_conv_dims: int,
-                 main_gru_dims: int,
+                 main_lstm_dims: int,
                  main_dropout: int,
                  postnet_kernel_size: int,
                  postnet_conv_layers: int,
                  postnet_conv_dims: int,
-                 postnet_gru_dims: int,
+                 postnet_lstm_dims: int,
                  postnet_dropout: int,
                  n_mels: int):
         super().__init__()
@@ -168,19 +168,19 @@ class ForwardTacotron(nn.Module):
                                            conv_dims=energy_conv_dims,
                                            rnn_dims=energy_rnn_dims,
                                            dropout=energy_dropout)
-        self.prenet = ConvGru(in_dims=embed_dims, gru_dims=prenet_gru_dims,
-                              conv_layers=prenet_conv_layers, kernel_size=prenet_kernel_size,
-                              conv_dims=prenet_conv_dims, dropout=prenet_dropout)
-        self.main_net = ConvGru(in_dims=2 * prenet_gru_dims + pitch_emb_dims + energy_emb_dims,
-                                gru_dims=main_gru_dims,
-                                conv_layers=main_conv_layers, kernel_size=main_kernel_size,
-                                conv_dims=main_conv_dims, dropout=main_dropout)
-        self.postnet = ConvGru(in_dims=n_mels, gru_dims=postnet_gru_dims,
-                               conv_layers=postnet_conv_layers, kernel_size=postnet_kernel_size,
-                               conv_dims=postnet_conv_dims, dropout=postnet_dropout)
+        self.prenet = ConvLstm(in_dims=embed_dims, lstm_dims=prenet_lstm_dims,
+                               conv_layers=prenet_conv_layers, kernel_size=prenet_kernel_size,
+                               conv_dims=prenet_conv_dims, dropout=prenet_dropout)
+        self.main_net = ConvLstm(in_dims=2 * prenet_lstm_dims + pitch_emb_dims + energy_emb_dims,
+                                 lstm_dims=main_lstm_dims,
+                                 conv_layers=main_conv_layers, kernel_size=main_kernel_size,
+                                 conv_dims=main_conv_dims, dropout=main_dropout)
+        self.postnet = ConvLstm(in_dims=n_mels, lstm_dims=postnet_lstm_dims,
+                                conv_layers=postnet_conv_layers, kernel_size=postnet_kernel_size,
+                                conv_dims=postnet_conv_dims, dropout=postnet_dropout)
 
-        self.lin = torch.nn.Linear(2 * main_gru_dims, n_mels)
-        self.post_proj = nn.Linear(2*postnet_gru_dims, n_mels, bias=False)
+        self.lin = torch.nn.Linear(2 * main_lstm_dims, n_mels)
+        self.post_proj = nn.Linear(2*postnet_lstm_dims, n_mels, bias=False)
         self.pitch_emb_dims = pitch_emb_dims
         self.energy_emb_dims = energy_emb_dims
         self.register_buffer('step', torch.zeros(1, dtype=torch.long))

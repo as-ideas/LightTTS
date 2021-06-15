@@ -133,19 +133,19 @@ forward_tacotron:
     prenet_conv_layers: 2
     prenet_conv_dims: 256
     prenet_dropout: 0.3
-    prenet_gru_dims: 256
+    prenet_lstm_dims: 256
 
     main_kernel_size: 5
     main_conv_layers: 3
     main_conv_dims: 512
     main_dropout: 0.
-    main_gru_dims: 512
+    main_lstm_dims: 512
 
     postnet_kernel_size: 5
     postnet_conv_layers: 3
     postnet_conv_dims: 256
     postnet_dropout: 0.
-    postnet_gru_dims: 256
+    postnet_lstm_dims: 256
 
   training:
     schedule:
