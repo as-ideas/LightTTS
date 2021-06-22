@@ -18,13 +18,33 @@ class LengthRegulator(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, x, dur):
-        x_expanded = []
-        for i in range(x.size(0)):
-            x_exp = torch.repeat_interleave(x[i], (dur[i] + 0.5).long(), dim=0)
-            x_expanded.append(x_exp)
-        x_expanded = pad_sequence(x_expanded, padding_value=0, batch_first=True)
-        return x_expanded
+    def forward(self, x, dur_hat):
+
+        dur_hat = dur_hat.detach()
+
+        bs = dur_hat.shape[0]
+
+        ends = torch.cumsum(dur_hat, dim=1)
+        mids = ends - dur_hat / 2.
+
+        device = x.device
+        seq_len = mids.shape[1]
+        mel_len = ends.max().long().item()
+
+        t_range = torch.arange(0, mel_len).long().to(device)
+        t_range = t_range.unsqueeze(0)
+        t_range = t_range.expand(bs, mel_len)
+        t_range = t_range.unsqueeze(-1)
+        t_range = t_range.expand(bs, mel_len, seq_len)
+
+        mids = mids.unsqueeze(1)
+
+        diff = t_range - mids
+        logits = -(diff ** 2) * 0.1 - 1e-9
+        weights = torch.softmax(logits, dim=2)
+        x = torch.einsum('bij,bjk->bik', weights, x)
+
+        return x
 
 
 class SeriesPredictor(nn.Module):
@@ -113,7 +133,6 @@ class ForwardTacotron(nn.Module):
                  series_conv_layers: int,
                  series_kernel_size: int,
                  num_chars: int,
-
                  durpred_conv_dims: int,
                  durpred_rnn_dims: int,
                  durpred_dropout: float,

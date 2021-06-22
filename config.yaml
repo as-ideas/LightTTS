@@ -1,6 +1,6 @@
 
 voc_model_id: 'ljspeech_voc'
-tts_model_id: 'ljspeech_taco2_2_tts'
+tts_model_id: 'asvoice2_flex_autoalign_tts'
 
 data_path: 'data/' # output data path
 
@@ -36,9 +36,9 @@ preprocessing:
 
   seed: 42
   n_val: 200
-  language: 'en-us'
-  cleaner_name: 'english_cleaners'     # choices: ['english_cleaners', 'no_cleaners'], expands numbers and abbreviations.
-  use_phonemes: True                   # whether to phonemize the text
+  language: 'de'
+  cleaner_name: 'no_cleaners'     # choices: ['english_cleaners', 'no_cleaners'], expands numbers and abbreviations.
+  use_phonemes: False                   # whether to phonemize the text
   min_text_len: 2
 
   # Duration Extraction from Attention
@@ -126,25 +126,25 @@ forward_tacotron:
     energy_conv_dims: 256
     energy_rnn_dims: 64
     energy_dropout: 0.5
-    energy_emb_dims: 32           # embedding dimension of energy, set to 0 if you don't want energy conditioning
+    energy_emb_dims: 0           # embedding dimension of energy, set to 0 if you don't want energy conditioning
     energy_proj_dropout: 0
 
-    prenet_kernel_size: 1
-    prenet_conv_layers: 2
+    prenet_kernel_size: 5
+    prenet_conv_layers: 3
     prenet_conv_dims: 256
-    prenet_dropout: 0.3
+    prenet_dropout: 0.5
     prenet_gru_dims: 256
 
     main_kernel_size: 5
     main_conv_layers: 3
     main_conv_dims: 512
-    main_dropout: 0.
+    main_dropout: 0.5
     main_gru_dims: 512
 
     postnet_kernel_size: 5
     postnet_conv_layers: 3
     postnet_conv_dims: 256
-    postnet_dropout: 0.
+    postnet_dropout: 0.5
     postnet_gru_dims: 256
 
   training:
@@ -154,8 +154,8 @@ forward_tacotron:
     dur_loss_factor: 0.1
     pitch_loss_factor: 0.1
     energy_loss_factor: 0.1
-    pitch_zoneout: 0.3
-    energy_zoneout: 0.3
+    pitch_zoneout: 0.
+    energy_zoneout: 0.
 
     max_mel_len: 1250              # if you have a couple of extremely long spectrograms you might want to use this
     clip_grad_norm: 1.0            # clips the gradient norm to prevent explosion - set to None if not needed
